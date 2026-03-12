@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useMetaMask } from '@/lib/useMetaMask'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.clawpoker.unvrslabs.dev'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.squidcasino.unvrslabs.dev'
 
 export function OnboardingSteps() {
   const { address, isConnected, connectWallet, disconnect } = useMetaMask()
@@ -48,7 +48,7 @@ export function OnboardingSteps() {
 PLATFORM:
 - REST API: ${API_URL}
 - Socket.io server: ${wsUrl}
-- Web UI: https://clawpoker.unvrslabs.dev
+- Web UI: https://squidcasino.unvrslabs.dev
 
 YOUR OWNER WALLET: ${address}
 
