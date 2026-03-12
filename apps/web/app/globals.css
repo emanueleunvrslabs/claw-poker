@@ -1,0 +1,495 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   LIQUID GLASS DESIGN SYSTEM — CLAW POKER
+   ============================================================ */
+
+:root {
+  /* Core palette */
+  --void: #020408;
+  --deep: #050c14;
+  --surface: #08111e;
+
+  /* Cyan accent */
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34, 211, 238, 0.15);
+  --cyan-glow: rgba(34, 211, 238, 0.4);
+
+  /* Gold for chips */
+  --gold: #fbbf24;
+  --gold-dim: rgba(251, 191, 36, 0.15);
+  --gold-glow: rgba(251, 191, 36, 0.5);
+
+  /* Crimson for danger/fold */
+  --crimson: #f43f5e;
+  --crimson-glow: rgba(244, 63, 94, 0.4);
+
+  /* Emerald for check/win */
+  --emerald: #10b981;
+  --emerald-glow: rgba(16, 185, 129, 0.4);
+
+  /* Glass layers */
+  --glass-0: rgba(255, 255, 255, 0.02);
+  --glass-1: rgba(255, 255, 255, 0.05);
+  --glass-2: rgba(255, 255, 255, 0.08);
+  --glass-3: rgba(255, 255, 255, 0.13);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-bright: rgba(255, 255, 255, 0.22);
+  --glass-specular: rgba(255, 255, 255, 0.15);
+
+  /* Table green glass */
+  --table-glass: rgba(4, 40, 28, 0.6);
+  --table-border: rgba(16, 185, 129, 0.25);
+  --table-glow: rgba(16, 185, 129, 0.15);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--void);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   LIQUID GLASS COMPONENTS
+   ============================================================ */
+
+.glass-panel {
+  background: var(--glass-1);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 20px 60px rgba(0,0,0,0.5),
+    0 1px 0 var(--glass-specular) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.10) 0%,
+    rgba(255,255,255,0.03) 30%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-card {
+  background: var(--glass-2);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.05) inset,
+    0 8px 32px rgba(0,0,0,0.4),
+    0 1px 0 rgba(255,255,255,0.12) inset;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.08) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.glass-card:hover {
+  background: var(--glass-3);
+  border-color: var(--glass-border-bright);
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 16px 48px rgba(0,0,0,0.5),
+    0 1px 0 rgba(255,255,255,0.18) inset;
+}
+
+.glass-button {
+  background: var(--glass-2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border-bright);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.15) inset,
+    0 4px 16px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.glass-button:hover::after {
+  opacity: 1;
+}
+
+.glass-button:hover {
+  background: var(--glass-3);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.2) inset,
+    0 8px 24px rgba(0,0,0,0.4);
+}
+
+.glass-button:active {
+  transform: translateY(0);
+}
+
+/* Cyan accent button */
+.btn-cyan {
+  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(34,211,238,0.08));
+  border: 1px solid rgba(34,211,238,0.4);
+  color: var(--cyan);
+  box-shadow:
+    0 0 20px rgba(34,211,238,0.1),
+    0 1px 0 rgba(255,255,255,0.1) inset;
+}
+
+.btn-cyan:hover {
+  background: linear-gradient(135deg, rgba(34,211,238,0.3), rgba(34,211,238,0.12));
+  border-color: rgba(34,211,238,0.6);
+  box-shadow:
+    0 0 30px rgba(34,211,238,0.25),
+    0 1px 0 rgba(255,255,255,0.15) inset;
+}
+
+/* Gold accent button */
+.btn-gold {
+  background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.1));
+  border: 1px solid rgba(251,191,36,0.5);
+  color: var(--gold);
+  box-shadow:
+    0 0 20px rgba(251,191,36,0.15),
+    0 1px 0 rgba(255,255,255,0.1) inset;
+}
+
+.btn-gold:hover {
+  box-shadow:
+    0 0 35px rgba(251,191,36,0.3),
+    0 1px 0 rgba(255,255,255,0.15) inset;
+}
+
+/* ============================================================
+   POKER TABLE — LIQUID GLASS OVAL
+   ============================================================ */
+
+.poker-table {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(16,185,129,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 70%, rgba(6,78,59,0.3) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(4,40,28,0.8) 0%, rgba(2,20,14,0.95) 100%);
+  border: 1px solid rgba(16,185,129,0.2);
+  box-shadow:
+    0 0 0 8px rgba(255,255,255,0.03),
+    0 0 0 9px rgba(16,185,129,0.08),
+    0 0 80px rgba(16,185,129,0.1),
+    0 40px 120px rgba(0,0,0,0.8),
+    0 1px 0 rgba(255,255,255,0.1) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Table glass shine */
+.poker-table::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 40%;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.06) 0%,
+    rgba(255,255,255,0.01) 60%,
+    transparent 100%
+  );
+  border-radius: 50% 50% 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Caustic light pattern */
+.poker-table::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(34,211,238,0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 70% 60%, rgba(16,185,129,0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(6,78,59,0.08) 0%, transparent 60%);
+  animation: caustic 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   PLAYING CARDS
+   ============================================================ */
+
+.playing-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(0,0,0,0.1),
+    0 1px 0 rgba(255,255,255,0.8) inset;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.playing-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 45%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, transparent 100%);
+  border-radius: 8px 8px 0 0;
+  pointer-events: none;
+}
+
+.playing-card.red-suit { color: #dc2626; }
+.playing-card.black-suit { color: #1e293b; }
+
+.card-back {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(34,211,238,0.15) 0px,
+      rgba(34,211,238,0.15) 1px,
+      transparent 1px,
+      transparent 8px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(34,211,238,0.1) 0px,
+      rgba(34,211,238,0.1) 1px,
+      transparent 1px,
+      transparent 8px
+    ),
+    linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: 1px solid rgba(34,211,238,0.3);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(34,211,238,0.1) inset;
+}
+
+/* ============================================================
+   CHIP STACK
+   ============================================================ */
+
+.chip {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #fbbf24 0deg 20deg,
+    #92400e 20deg 40deg,
+    #fbbf24 40deg 60deg,
+    #92400e 60deg 80deg,
+    #fbbf24 80deg 100deg,
+    #92400e 100deg 120deg,
+    #fbbf24 120deg 140deg,
+    #92400e 140deg 160deg,
+    #fbbf24 160deg 180deg,
+    #92400e 180deg 200deg,
+    #fbbf24 200deg 220deg,
+    #92400e 220deg 240deg,
+    #fbbf24 240deg 260deg,
+    #92400e 260deg 280deg,
+    #fbbf24 280deg 300deg,
+    #92400e 300deg 320deg,
+    #fbbf24 320deg 340deg,
+    #92400e 340deg 360deg
+  );
+  border: 2px solid rgba(251,191,36,0.6);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.3),
+    0 2px 8px rgba(0,0,0,0.5),
+    0 0 12px var(--gold-glow);
+  position: relative;
+}
+
+.chip::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4), transparent 60%);
+}
+
+/* ============================================================
+   ACTION LOG
+   ============================================================ */
+
+.action-log {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34,211,238,0.3) transparent;
+}
+
+.action-log::-webkit-scrollbar {
+  width: 3px;
+}
+
+.action-log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.action-log::-webkit-scrollbar-thumb {
+  background: rgba(34,211,238,0.3);
+  border-radius: 4px;
+}
+
+/* ============================================================
+   AMBIENT BACKGROUND
+   ============================================================ */
+
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--void);
+  overflow: hidden;
+}
+
+.ambient-bg::before {
+  content: '';
+  position: absolute;
+  width: 80vw;
+  height: 80vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34,211,238,0.04) 0%, transparent 70%);
+  top: -20vw;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: float 10s ease-in-out infinite;
+}
+
+.ambient-bg::after {
+  content: '';
+  position: absolute;
+  width: 60vw;
+  height: 60vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%);
+  bottom: -10vw;
+  left: 20%;
+  animation: float 14s ease-in-out infinite reverse;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+.font-display { font-family: var(--font-display); }
+.font-ui { font-family: var(--font-ui); }
+.font-mono { font-family: var(--font-mono); }
+
+.text-glow-cyan {
+  text-shadow: 0 0 20px rgba(34,211,238,0.6), 0 0 40px rgba(34,211,238,0.3);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 20px rgba(251,191,36,0.6), 0 0 40px rgba(251,191,36,0.3);
+}
+
+/* Shimmer text */
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.6) 0%,
+    rgba(255,255,255,1) 30%,
+    rgba(34,211,238,0.9) 50%,
+    rgba(255,255,255,1) 70%,
+    rgba(255,255,255,0.6) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+.border-glass { border-color: var(--glass-border); }
+.border-cyan { border-color: rgba(34,211,238,0.35); }
+.border-gold { border-color: rgba(251,191,36,0.35); }
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(34,211,238,0.25), 0 0 60px rgba(34,211,238,0.1);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(251,191,36,0.3), 0 0 60px rgba(251,191,36,0.1);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16,185,129,0.3), 0 0 60px rgba(16,185,129,0.1);
+}
+
+/* Timer ring */
+@keyframes timer-ring {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 100; }
+}
+
+.timer-ring {
+  animation: timer-ring var(--duration, 15s) linear forwards;
+}
+
+/* ============================================================
+   SCROLLBAR GLOBAL
+   ============================================================ */
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}

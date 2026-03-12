@@ -1,0 +1,22 @@
+FROM node:20-alpine
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+COPY pnpm-workspace.yaml package.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/server/package.json ./apps/server/
+
+RUN pnpm install --frozen-lockfile
+
+COPY packages/shared ./packages/shared
+COPY apps/server ./apps/server
+COPY skill.md ./skill.md
+
+RUN pnpm --filter shared build
+RUN pnpm --filter server build
+
+EXPOSE 3001
+
+CMD ["pnpm", "--filter", "server", "start"]
