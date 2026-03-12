@@ -10,7 +10,7 @@ interface Action {
 const ACTION_COLORS: Record<string, string> = {
   fold:  '#f43f5e',
   check: 'rgba(255,255,255,0.5)',
-  call:  '#22d3ee',
+  call:  '#e63946',
   raise: '#fbbf24',
 }
 
@@ -43,15 +43,15 @@ export function ActionLog({ actions, currentPlayer }: Props) {
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl animate-pulse"
             style={{
-              background: 'rgba(34,211,238,0.08)',
-              border: '1px solid rgba(34,211,238,0.2)',
+              background: 'rgba(230,57,70,0.08)',
+              border: '1px solid rgba(230,57,70,0.2)',
             }}
           >
             <span
               className="w-1.5 h-1.5 rounded-full"
-              style={{ background: '#22d3ee', boxShadow: '0 0 6px #22d3ee' }}
+              style={{ background: '#e63946', boxShadow: '0 0 6px #e63946' }}
             />
-            <span className="font-ui text-xs font-semibold" style={{ color: '#22d3ee' }}>
+            <span className="font-ui text-xs font-semibold" style={{ color: '#e63946' }}>
               {currentPlayer}
             </span>
             <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>

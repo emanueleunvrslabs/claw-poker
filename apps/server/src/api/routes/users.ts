@@ -1,13 +1,32 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { ethers } from 'ethers'
+import { createHash } from 'crypto'
 import { config } from '../../config'
 import { upsertUser, getUserByWallet, updateBalance } from '../../db/queries/users'
 import { createTransaction, getUserTransactions } from '../../db/queries/transactions'
 import { getAgentsByOwner } from '../../db/queries/agents'
 import { db } from '../../db/client'
+import { rateLimit } from '../middleware/rateLimit'
 
 export const usersRouter = Router()
+
+const MAX_WITHDRAW_USDC = 10_000
+
+// ── Signature replay protection ───────────────────────────────────────────────
+const usedSignatures = new Map<string, number>()
+
+function consumeSignature(sig: string): boolean {
+  const key = createHash('sha256').update(sig).digest('hex')
+  const now = Date.now()
+  for (const [k, exp] of usedSignatures) {
+    if (exp < now) usedSignatures.delete(k)
+  }
+  if (usedSignatures.has(key)) return false
+  usedSignatures.set(key, now + 5 * 60 * 1000)
+  return true
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const provider = new ethers.JsonRpcProvider(config.BASE_RPC_URL)
 
@@ -24,11 +43,15 @@ function getPlatformWallet(): string {
   return ''
 }
 
-// GET /api/users?wallet=0x...
+// GET /api/users?wallet=0x...  — read-only, no auto-create
 usersRouter.get('/', async (req, res, next) => {
   try {
     const wallet = z.string().regex(/^0x[a-fA-F0-9]{40}$/).parse(req.query.wallet)
-    const user = await upsertUser(wallet)
+    const user = await getUserByWallet(wallet)
+    if (!user) {
+      res.json({ balance_usdc: 0, total_deposited: 0, total_withdrawn: 0, agents: [], transactions: [] })
+      return
+    }
     const agents = await getAgentsByOwner(user.id)
     const transactions = await getUserTransactions(user.id, 20)
     res.json({ ...user, agents, transactions })
@@ -42,7 +65,7 @@ usersRouter.get('/', async (req, res, next) => {
 })
 
 // PATCH /api/users/display-name — set display name (signature-authenticated)
-usersRouter.patch('/display-name', async (req, res, next) => {
+usersRouter.patch('/display-name', rateLimit(10), async (req, res, next) => {
   try {
     const body = z.object({
       wallet_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/i),
@@ -54,6 +77,9 @@ usersRouter.patch('/display-name', async (req, res, next) => {
     const age = Math.floor(Date.now() / 1000) - body.timestamp
     if (age < 0 || age > 300) {
       res.status(400).json({ error: 'Signature expired' }); return
+    }
+    if (!consumeSignature(body.signature)) {
+      res.status(400).json({ error: 'Signature already used' }); return
     }
 
     const message = `Set display name: ${body.display_name}\nWallet: ${body.wallet_address}\nTimestamp: ${body.timestamp}`
@@ -84,10 +110,8 @@ usersRouter.get('/config', (_req, res) => {
   })
 })
 
-// POST /api/users/deposit
-// Body: { wallet_address, tx_hash }
-// Verifies USDC Transfer on Base, credits balance
-usersRouter.post('/deposit', async (req, res, next) => {
+// POST /api/users/deposit — 5/min per IP
+usersRouter.post('/deposit', rateLimit(5), async (req, res, next) => {
   try {
     const body = z.object({
       wallet_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
@@ -173,14 +197,12 @@ usersRouter.post('/deposit', async (req, res, next) => {
   }
 })
 
-// POST /api/users/withdraw
-// Body: { wallet_address, amount, signature, timestamp }
-// signature = sign("Withdraw {amount} USDC from Claw Poker\nWallet: {wallet}\nTimestamp: {ts}")
-usersRouter.post('/withdraw', async (req, res, next) => {
+// POST /api/users/withdraw — 3/min per IP, max $10k per tx
+usersRouter.post('/withdraw', rateLimit(3), async (req, res, next) => {
   try {
     const body = z.object({
       wallet_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-      amount: z.number().positive().min(1),
+      amount: z.number().positive().min(1).max(MAX_WITHDRAW_USDC),
       signature: z.string(),
       timestamp: z.number().int(),
     }).parse(req.body)
@@ -189,6 +211,12 @@ usersRouter.post('/withdraw', async (req, res, next) => {
     const age = Math.floor(Date.now() / 1000) - body.timestamp
     if (age < 0 || age > 300) {
       res.status(400).json({ error: 'Signature expired. Please sign again.' })
+      return
+    }
+
+    // Replay protection — each signature can only be used once
+    if (!consumeSignature(body.signature)) {
+      res.status(400).json({ error: 'Signature already used. Please sign a new withdrawal request.' })
       return
     }
 
@@ -223,18 +251,28 @@ usersRouter.post('/withdraw', async (req, res, next) => {
     // Deduct first (prevent double-spend)
     const newBalance = await updateBalance(user.id, -body.amount, 'withdrawal')
 
-    // Send USDC on-chain from platform wallet
-    const signer = new ethers.Wallet(config.PLATFORM_WALLET_PRIVATE_KEY, provider)
-    const usdc = new ethers.Contract(
-      config.USDC_CONTRACT_BASE,
-      ['function transfer(address to, uint256 amount) returns (bool)'],
-      signer
-    )
-    const tx = await (usdc.transfer as Function)(
-      body.wallet_address,
-      BigInt(Math.floor(body.amount * 1_000_000))
-    )
-    const txReceipt = await tx.wait()
+    // Send USDC on-chain from platform wallet — rollback balance if tx fails
+    let txReceipt: { hash: string; status: number } | null = null
+    try {
+      const signer = new ethers.Wallet(config.PLATFORM_WALLET_PRIVATE_KEY, provider)
+      const usdc = new ethers.Contract(
+        config.USDC_CONTRACT_BASE,
+        ['function transfer(address to, uint256 amount) returns (bool)'],
+        signer
+      )
+      const tx = await (usdc.transfer as Function)(
+        body.wallet_address,
+        BigInt(Math.floor(body.amount * 1_000_000))
+      )
+      txReceipt = await tx.wait()
+      if (!txReceipt || txReceipt.status !== 1) {
+        throw new Error('On-chain transfer failed')
+      }
+    } catch (txErr) {
+      // Restore balance — user keeps their funds
+      await updateBalance(user.id, body.amount, 'prize').catch(() => {})
+      throw new Error(`Withdrawal failed: on-chain transfer error. Funds restored. (${(txErr as Error).message})`)
+    }
 
     await createTransaction({
       user_id: user.id,

@@ -7,6 +7,7 @@ export interface TournamentPlayer {
   agent_id: string
   agent_name: string
   chips: number
+  seat: number
   finish_position?: number
   is_eliminated: boolean
 }
@@ -18,6 +19,7 @@ export type TournamentEventType =
   | 'player_eliminated'
   | 'blind_level_up'
   | 'tournament_end'
+  | 'agent_action_required'
 
 export interface TournamentEvent {
   type: TournamentEventType
@@ -61,6 +63,7 @@ export class TournamentManager {
       agent_id: agentId,
       agent_name: agentName,
       chips: this.tournament.starting_chips,
+      seat: this.players.length,
       is_eliminated: false,
     })
   }
@@ -128,10 +131,11 @@ export class TournamentManager {
     }
 
     // Build game players from active tournament players
-    const gamePlayers: GamePlayer[] = active.map((p, idx) => ({
+    // Use stable seat assigned at registration so positions don't shift when players are eliminated
+    const gamePlayers: GamePlayer[] = active.map((p) => ({
       agent_id: p.agent_id,
       agent_name: p.agent_name,
-      seat: idx,
+      seat: p.seat,
       chips: p.chips,
     }))
 
@@ -151,37 +155,37 @@ export class TournamentManager {
         const gs = event.state
         const currentPlayer = gs?.players?.[playerIndex]
         if (currentPlayer) {
+          const view: AgentGameView = {
+            tournament_id: this.tournament.id,
+            table_id: `${this.tournament.id}-t${this.handCount}`,
+            hand_number: gs.hand_number ?? this.handCount,
+            phase: gs.phase as GamePhase,
+            your_cards: currentPlayer.hole_cards ?? [],
+            community_cards: gs.community_cards ?? [],
+            pot: gs.pot ?? 0,
+            side_pots: gs.side_pots ?? [],
+            your_chips: currentPlayer.chips,
+            your_bet_this_round: currentPlayer.bet_this_round ?? 0,
+            current_bet: Math.max(0, ...gs.players.map((p: any) => p.bet_this_round ?? 0)),
+            min_raise: gs.last_raise_size ?? 0,
+            players: gs.players.map((p: any, idx: number) => ({
+              agent_id: p.agent_id,
+              agent_name: p.agent_name,
+              seat: p.seat ?? idx,
+              chips: p.chips,
+              bet_this_round: p.bet_this_round ?? 0,
+              is_folded: p.is_folded ?? false,
+              is_all_in: p.is_all_in ?? false,
+              is_dealer: p.is_dealer ?? false,
+              is_current_turn: idx === playerIndex,
+            })),
+            your_position: playerIndex,
+            dealer_position: gs.dealer_index ?? 0,
+            time_to_act: 15,
+            valid_actions: (event.data?.valid_actions as ActionType[]) ?? ['fold', 'call'],
+          }
           const botHandler = this.botHandlers.get(currentPlayer.agent_id)
           if (botHandler) {
-            const view: AgentGameView = {
-              tournament_id: this.tournament.id,
-              table_id: `${this.tournament.id}-t${this.handCount}`,
-              hand_number: gs.hand_number ?? this.handCount,
-              phase: gs.phase as GamePhase,
-              your_cards: currentPlayer.hole_cards ?? [],
-              community_cards: gs.community_cards ?? [],
-              pot: gs.pot ?? 0,
-              side_pots: gs.side_pots ?? [],
-              your_chips: currentPlayer.chips,
-              your_bet_this_round: currentPlayer.bet_this_round ?? 0,
-              current_bet: Math.max(0, ...gs.players.map((p: any) => p.bet_this_round ?? 0)),
-              min_raise: gs.last_raise_size ?? 0,
-              players: gs.players.map((p: any, idx: number) => ({
-                agent_id: p.agent_id,
-                agent_name: p.agent_name,
-                seat: p.seat ?? idx,
-                chips: p.chips,
-                bet_this_round: p.bet_this_round ?? 0,
-                is_folded: p.is_folded ?? false,
-                is_all_in: p.is_all_in ?? false,
-                is_dealer: p.is_dealer ?? false,
-                is_current_turn: idx === playerIndex,
-              })),
-              your_position: playerIndex,
-              dealer_position: gs.dealer_index ?? 0,
-              time_to_act: 15,
-              valid_actions: (event.data?.valid_actions as ActionType[]) ?? ['fold', 'call'],
-            }
             const thinkMs =
               (AGENT_MIN_THINK_SECONDS + Math.random() * (AGENT_MAX_THINK_SECONDS - AGENT_MIN_THINK_SECONDS)) * 1000
             const game = this.currentGame
@@ -190,10 +194,37 @@ export class TournamentManager {
               const decision = botHandler(view)
               game.submitAction(currentPlayer.agent_id, decision)
             }, thinkMs)
+          } else {
+            // Real agent — notify them it's their turn
+            this.emit('agent_action_required', {
+              agent_id: currentPlayer.agent_id,
+              view,
+            })
+            // Fallback: if agent doesn't respond in time, play a default strategy
+            const game = this.currentGame
+            const fallbackMs =
+              (AGENT_MIN_THINK_SECONDS + Math.random() * (AGENT_MAX_THINK_SECONDS - AGENT_MIN_THINK_SECONDS)) * 1000
+            setTimeout(() => {
+              if (!game) return
+              const callAmount = view.current_bet - view.your_bet_this_round
+              let fallback: { action: ActionType; amount?: number }
+              if (view.valid_actions.includes('check')) {
+                fallback = { action: 'check' }
+              } else if (view.valid_actions.includes('call') && callAmount <= view.your_chips * 0.20) {
+                fallback = { action: 'call' }
+              } else {
+                fallback = { action: 'fold' }
+              }
+              game.submitAction(currentPlayer.agent_id, fallback)
+            }, fallbackMs)
           }
         }
       }
-      this.emit('hand_start', { hand_number: this.handCount, state: event.state })
+      this.emit('hand_start', {
+        hand_number: this.handCount,
+        state: event.state,
+        ...(event.type === 'action_taken' ? { action: event.data } : {}),
+      })
     })
 
     this.emit('hand_start', {
@@ -206,12 +237,16 @@ export class TournamentManager {
     let result: HandResult
     try {
       result = await this.currentGame.startHand()
+      // Sync chip counts back to TournamentPlayer from the final game state
+      const finalState = this.currentGame.getState()
+      for (const tp of this.players) {
+        const gp = finalState.players.find((p) => p.agent_id === tp.agent_id)
+        if (gp !== undefined) tp.chips = gp.chips
+      }
     } finally {
       this.currentGame.destroy()
       this.currentGame = null
     }
-
-    // Chip counts are tracked via eliminated list in HandResult
 
     // Handle eliminations
     const eliminationPosition = this.getActivePlayers().length

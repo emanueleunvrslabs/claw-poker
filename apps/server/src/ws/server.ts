@@ -3,12 +3,20 @@ import { Server as IOServer } from 'socket.io'
 import { setupAgentNamespace } from './agentHandler'
 import { setupSpectatorNamespace } from './spectatorHandler'
 import { initTournamentRegistry } from './tournamentRegistry'
-import { initDemoBots } from '../demo/demoBotSeeder'
 
 export function setupWebSocket(httpServer: HTTPServer): IOServer {
+  const isProd = process.env.NODE_ENV === 'production'
+  const wsOrigin = isProd
+    ? [
+        'https://squidcasino.unvrslabs.dev',
+        'https://www.squidcasino.unvrslabs.dev',
+        process.env.FRONTEND_URL,
+      ].filter(Boolean) as string[]
+    : '*'
+
   const io = new IOServer(httpServer, {
     cors: {
-      origin: '*',
+      origin: wsOrigin,
       methods: ['GET', 'POST'],
     },
     transports: ['websocket', 'polling'],
@@ -19,10 +27,8 @@ export function setupWebSocket(httpServer: HTTPServer): IOServer {
 
   const registry = initTournamentRegistry(io)
 
-  // Seed tournaments then populate with demo bots
-  registry.seedDefaultTournaments()
-    .then(() => initDemoBots())
-    .catch(console.error)
+  // Seed default tournaments on startup
+  registry.seedDefaultTournaments().catch(console.error)
 
   return io
 }

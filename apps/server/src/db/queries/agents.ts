@@ -1,6 +1,14 @@
 import { db } from '../client'
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
+import { createHash } from 'crypto'
+
+// ── API key cache: sha256(key) → { agent, expires } ──────────────────────────
+// WebSocket connections auth once at connect time; this prevents repeated full
+// bcrypt scans across all agents on every new connection.
+const KEY_CACHE_TTL_MS = 5 * 60 * 1000 // 5 min
+const keyCache = new Map<string, { agent: AgentRow; expires: number }>()
+// ─────────────────────────────────────────────────────────────────────────────
 
 export interface AgentRow {
   id: string
@@ -51,10 +59,14 @@ export async function getAgentByName(name: string): Promise<AgentRow | null> {
 }
 
 export async function verifyApiKey(apiKey: string): Promise<AgentRow | null> {
-  // Extract agent name prefix or scan active agents
-  // API keys are cp_<nanoid> — we need to find by hash
-  // For perf, we store a fast lookup prefix in a separate index
-  // Simple approach: try all active agents (small dataset)
+  const cacheKey = createHash('sha256').update(apiKey).digest('hex')
+  const now = Date.now()
+
+  // Return cached result (avoids full bcrypt scan on repeated connections)
+  const cached = keyCache.get(cacheKey)
+  if (cached && cached.expires > now) return cached.agent
+
+  // Full scan — only runs on cache miss (first connection per key)
   const { data: agents, error } = await db
     .from('agents')
     .select('*')
@@ -65,9 +77,18 @@ export async function verifyApiKey(apiKey: string): Promise<AgentRow | null> {
 
   for (const agent of agents) {
     const match = await bcrypt.compare(apiKey, agent.api_key_hash)
-    if (match) return agent
+    if (match) {
+      keyCache.set(cacheKey, { agent, expires: now + KEY_CACHE_TTL_MS })
+      return agent
+    }
   }
   return null
+}
+
+export function invalidateAgentCache(agentId: string): void {
+  for (const [key, val] of keyCache) {
+    if (val.agent.id === agentId) keyCache.delete(key)
+  }
 }
 
 export async function updateAgentStats(

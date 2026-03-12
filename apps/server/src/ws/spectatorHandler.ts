@@ -1,4 +1,5 @@
 import type { Server as IOServer, Socket } from 'socket.io'
+import { getLastSpectateView } from './tournamentRegistry'
 
 export function setupSpectatorNamespace(io: IOServer): void {
   const spectatorNs = io.of('/spectate')
@@ -11,6 +12,9 @@ export function setupSpectatorNamespace(io: IOServer): void {
     socket.on('watch', (tournamentId: string) => {
       socket.join(`spectator:${tournamentId}`)
       socket.emit('joined', { tournament_id: tournamentId })
+      // Send last known state immediately so the table doesn't sit on "Waiting for game..."
+      const cached = getLastSpectateView(tournamentId)
+      if (cached) socket.emit('game:state', cached)
     })
 
     socket.on('unwatch', (tournamentId: string) => {

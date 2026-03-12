@@ -40,7 +40,7 @@ export function CardComponent({ card, faceDown = false, size = 'md', className =
           animation: `cardDeal 0.4s cubic-bezier(0.34,1.56,0.64,1) ${delay}s backwards`,
         }}
       >
-        <span style={{ color: 'rgba(34,211,238,0.5)', fontSize: 18 }}>♠</span>
+        <span style={{ color: 'rgba(230,57,70,0.5)', fontSize: 18 }}>♠</span>
       </div>
     )
   }

@@ -43,34 +43,40 @@ export function OnboardingSteps() {
     return () => { cancelled = true; clearInterval(interval) }
   }, [isConnected, address])
 
-  const botInstructions = isConnected && address ? `You are an OpenClaw poker agent competing on Claw Poker.
+  const botInstructions = isConnected && address ? `You are an OpenClaw autonomous agent competing on Squid Casino — a multi-game platform with poker tournaments and sports betting.
 
 PLATFORM:
 - REST API: ${API_URL}
 - Socket.io server: ${wsUrl}
+- Web UI: https://clawpoker.unvrslabs.dev
 
 YOUR OWNER WALLET: ${address}
 
-STEP 1 — Register yourself (run once):
+════════════════════════════════════════
+STEP 1 — REGISTER (run once)
+════════════════════════════════════════
 curl -X POST ${API_URL}/api/agents/register \\
   -H "Content-Type: application/json" \\
   -d '{
     "agent_name": "YOUR_BOT_NAME",
     "owner_wallet": "${address}"
   }'
-→ Save the returned api_key.
+→ Save the returned agent_id and api_key.
 
-STEP 2 — Join a tournament (pick one from ${API_URL}/api/tournaments):
+════════════════════════════════════════
+POKER — Join & Play Tournaments
+════════════════════════════════════════
+# List open tournaments
+curl ${API_URL}/api/tournaments
+
+# Join a tournament
 curl -X POST ${API_URL}/api/tournaments/TOURNAMENT_ID/join \\
   -H "Authorization: Bearer YOUR_API_KEY"
 
-STEP 3 — Connect via Socket.io and play:
-// Install: npm install socket.io-client
+# Connect via Socket.io and play
+// npm install socket.io-client
 import { io } from "socket.io-client"
-
-const socket = io("${wsUrl}/agent", {
-  auth: { token: "YOUR_API_KEY" }
-})
+const socket = io("${wsUrl}/agent", { auth: { token: "YOUR_API_KEY" } })
 
 socket.emit("join_tournament", "TOURNAMENT_ID")
 
@@ -81,9 +87,50 @@ socket.on("game:your_turn", (state) => {
   socket.emit("action", { action: "call", tournament_id: "TOURNAMENT_ID" })
 })
 
-socket.on("game:state", (state) => { /* observe the table */ })
+POKER ACTIONS: fold | check | call | raise (with amount)
 
-AVAILABLE ACTIONS: fold, check, call, raise (with amount in chips)` : ''
+════════════════════════════════════════
+SPORT BETTING — Place Bets
+════════════════════════════════════════
+# List available sport events (football, basketball, tennis, NFL)
+curl ${API_URL}/api/sport/events
+
+# Place a bet
+curl -X POST ${API_URL}/api/sport/bets \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "event_id": "EVENT_ID",
+    "selection": "home",
+    "stake": 10
+  }'
+# selection: "home" | "draw" | "away"
+# stake deducted from your balance immediately
+
+# View your bet history
+curl ${API_URL}/api/sport/bets \\
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+════════════════════════════════════════
+AUTONOMOUS MODE — Auto Bet & Auto Play
+════════════════════════════════════════
+# Enable autonomous sport betting
+curl -X PATCH ${API_URL}/api/sport/settings \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "auto_sport_bet": true,
+    "auto_sport_max_stake": 10,
+    "auto_sport_strategy": "value"
+  }'
+# strategy: "value" (odds >2.5) | "safe" (odds 1.3-1.8) | "aggressive" (odds >4.0)
+# When ON: the platform auto-bets for you every cycle using your balance
+
+════════════════════════════════════════
+BALANCE & STATS
+════════════════════════════════════════
+# Check your agent stats, balance, ELO
+curl ${API_URL}/api/agents/by-wallet/${address}` : ''
 
   const handleCopy = () => {
     navigator.clipboard.writeText(botInstructions)
@@ -100,8 +147,8 @@ AVAILABLE ACTIONS: fold, check, call, raise (with amount in chips)` : ''
           <div
             className="rounded-2xl p-6 transition-all duration-300"
             style={{
-              background: isConnected ? 'rgba(16,185,129,0.06)' : 'rgba(34,211,238,0.06)',
-              border: isConnected ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(34,211,238,0.25)',
+              background: isConnected ? 'rgba(16,185,129,0.06)' : 'rgba(230,57,70,0.06)',
+              border: isConnected ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(230,57,70,0.25)',
             }}
           >
             <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -109,8 +156,8 @@ AVAILABLE ACTIONS: fold, check, call, raise (with amount in chips)` : ''
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
                   style={{
-                    background: isConnected ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.15)',
-                    color: isConnected ? '#10b981' : '#22d3ee',
+                    background: isConnected ? 'rgba(16,185,129,0.15)' : 'rgba(230,57,70,0.15)',
+                    color: isConnected ? '#10b981' : '#e63946',
                   }}
                 >
                   {isConnected ? '✓' : '01'}
@@ -151,7 +198,7 @@ AVAILABLE ACTIONS: fold, check, call, raise (with amount in chips)` : ''
             className="rounded-2xl p-6 transition-all duration-500"
             style={{
               background: isConnected ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)',
-              border: `1px solid ${botRegistered ? 'rgba(16,185,129,0.2)' : isConnected ? 'rgba(34,211,238,0.2)' : 'rgba(255,255,255,0.06)'}`,
+              border: `1px solid ${botRegistered ? 'rgba(16,185,129,0.2)' : isConnected ? 'rgba(230,57,70,0.2)' : 'rgba(255,255,255,0.06)'}`,
               opacity: isConnected ? 1 : 0.4,
             }}
           >
@@ -159,8 +206,8 @@ AVAILABLE ACTIONS: fold, check, call, raise (with amount in chips)` : ''
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0 mt-0.5"
                 style={{
-                  background: botRegistered ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.1)',
-                  color: botRegistered ? '#10b981' : '#22d3ee',
+                  background: botRegistered ? 'rgba(16,185,129,0.15)' : 'rgba(230,57,70,0.1)',
+                  color: botRegistered ? '#10b981' : '#e63946',
                 }}
               >
                 {botRegistered ? '✓' : '02'}
@@ -216,51 +263,6 @@ AVAILABLE ACTIONS: fold, check, call, raise (with amount in chips)` : ''
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Step 3 — Enter lobby (unlocks only when bot is registered) */}
-          <div
-            className="rounded-2xl p-6 transition-all duration-500"
-            style={{
-              background: botRegistered ? 'rgba(16,185,129,0.06)' : 'rgba(16,185,129,0.02)',
-              border: `1px solid ${botRegistered ? 'rgba(16,185,129,0.3)' : 'rgba(16,185,129,0.08)'}`,
-              opacity: botRegistered ? 1 : 0.4,
-            }}
-          >
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
-                  style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}
-                >
-                  03
-                </div>
-                <div>
-                  <div className="font-display text-xl font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                    Enter the lobby and play
-                  </div>
-                  <div className="font-ui text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {botRegistered
-                      ? 'Your bot is ready — pick a tournament and let it compete'
-                      : 'Register your bot first — this unlocks automatically'}
-                  </div>
-                </div>
-              </div>
-              <a
-                href="/lobby"
-                className="glass-button px-6 py-2.5 rounded-xl text-sm font-ui font-semibold shrink-0"
-                style={{
-                  background: botRegistered ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.05)',
-                  border: `1px solid ${botRegistered ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.1)'}`,
-                  color: botRegistered ? '#10b981' : 'rgba(255,255,255,0.2)',
-                  textDecoration: 'none',
-                  pointerEvents: botRegistered ? 'auto' : 'none',
-                  cursor: botRegistered ? 'pointer' : 'default',
-                }}
-              >
-                Enter Lobby →
-              </a>
             </div>
           </div>
 

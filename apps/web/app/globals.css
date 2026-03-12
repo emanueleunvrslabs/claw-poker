@@ -14,10 +14,10 @@
   --deep: #050c14;
   --surface: #08111e;
 
-  /* Cyan accent */
-  --cyan: #22d3ee;
-  --cyan-dim: rgba(34, 211, 238, 0.15);
-  --cyan-glow: rgba(34, 211, 238, 0.4);
+  /* Red accent — primary brand */
+  --cyan: #e63946;
+  --cyan-dim: rgba(230, 57, 70, 0.15);
+  --cyan-glow: rgba(230, 57, 70, 0.4);
 
   /* Gold for chips */
   --gold: #fbbf24;
@@ -182,19 +182,19 @@ body {
 
 /* Cyan accent button */
 .btn-cyan {
-  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(34,211,238,0.08));
-  border: 1px solid rgba(34,211,238,0.4);
+  background: linear-gradient(135deg, rgba(230,57,70,0.2), rgba(230,57,70,0.08));
+  border: 1px solid rgba(230,57,70,0.4);
   color: var(--cyan);
   box-shadow:
-    0 0 20px rgba(34,211,238,0.1),
+    0 0 20px rgba(230,57,70,0.1),
     0 1px 0 rgba(255,255,255,0.1) inset;
 }
 
 .btn-cyan:hover {
-  background: linear-gradient(135deg, rgba(34,211,238,0.3), rgba(34,211,238,0.12));
-  border-color: rgba(34,211,238,0.6);
+  background: linear-gradient(135deg, rgba(230,57,70,0.3), rgba(230,57,70,0.12));
+  border-color: rgba(230,57,70,0.6);
   box-shadow:
-    0 0 30px rgba(34,211,238,0.25),
+    0 0 30px rgba(230,57,70,0.25),
     0 1px 0 rgba(255,255,255,0.15) inset;
 }
 
@@ -257,7 +257,7 @@ body {
   position: absolute;
   inset: -20%;
   background:
-    radial-gradient(ellipse at 30% 40%, rgba(34,211,238,0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 30% 40%, rgba(230,57,70,0.04) 0%, transparent 40%),
     radial-gradient(ellipse at 70% 60%, rgba(16,185,129,0.05) 0%, transparent 40%),
     radial-gradient(ellipse at 50% 50%, rgba(6,78,59,0.08) 0%, transparent 60%);
   animation: caustic 8s ease-in-out infinite;
@@ -299,23 +299,23 @@ body {
   background:
     repeating-linear-gradient(
       45deg,
-      rgba(34,211,238,0.15) 0px,
-      rgba(34,211,238,0.15) 1px,
+      rgba(230,57,70,0.15) 0px,
+      rgba(230,57,70,0.15) 1px,
       transparent 1px,
       transparent 8px
     ),
     repeating-linear-gradient(
       -45deg,
-      rgba(34,211,238,0.1) 0px,
-      rgba(34,211,238,0.1) 1px,
+      rgba(230,57,70,0.1) 0px,
+      rgba(230,57,70,0.1) 1px,
       transparent 1px,
       transparent 8px
     ),
     linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border: 1px solid rgba(34,211,238,0.3);
+  border: 1px solid rgba(230,57,70,0.3);
   box-shadow:
     0 2px 8px rgba(0,0,0,0.5),
-    0 0 0 1px rgba(34,211,238,0.1) inset;
+    0 0 0 1px rgba(230,57,70,0.1) inset;
 }
 
 /* ============================================================
@@ -367,7 +367,7 @@ body {
 
 .action-log {
   scrollbar-width: thin;
-  scrollbar-color: rgba(34,211,238,0.3) transparent;
+  scrollbar-color: rgba(230,57,70,0.3) transparent;
 }
 
 .action-log::-webkit-scrollbar {
@@ -379,7 +379,7 @@ body {
 }
 
 .action-log::-webkit-scrollbar-thumb {
-  background: rgba(34,211,238,0.3);
+  background: rgba(230,57,70,0.3);
   border-radius: 4px;
 }
 
@@ -401,7 +401,7 @@ body {
   width: 80vw;
   height: 80vw;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(34,211,238,0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(230,57,70,0.04) 0%, transparent 70%);
   top: -20vw;
   left: 50%;
   transform: translateX(-50%);
@@ -429,7 +429,7 @@ body {
 .font-mono { font-family: var(--font-mono); }
 
 .text-glow-cyan {
-  text-shadow: 0 0 20px rgba(34,211,238,0.6), 0 0 40px rgba(34,211,238,0.3);
+  text-shadow: 0 0 20px rgba(230,57,70,0.6), 0 0 40px rgba(230,57,70,0.3);
 }
 
 .text-glow-gold {
@@ -442,7 +442,7 @@ body {
     90deg,
     rgba(255,255,255,0.6) 0%,
     rgba(255,255,255,1) 30%,
-    rgba(34,211,238,0.9) 50%,
+    rgba(230,57,70,0.9) 50%,
     rgba(255,255,255,1) 70%,
     rgba(255,255,255,0.6) 100%
   );
@@ -458,11 +458,11 @@ body {
    ============================================================ */
 
 .border-glass { border-color: var(--glass-border); }
-.border-cyan { border-color: rgba(34,211,238,0.35); }
+.border-cyan { border-color: rgba(230,57,70,0.35); }
 .border-gold { border-color: rgba(251,191,36,0.35); }
 
 .glow-cyan {
-  box-shadow: 0 0 20px rgba(34,211,238,0.25), 0 0 60px rgba(34,211,238,0.1);
+  box-shadow: 0 0 20px rgba(230,57,70,0.25), 0 0 60px rgba(230,57,70,0.1);
 }
 
 .glow-gold {
@@ -472,6 +472,65 @@ body {
 .glow-emerald {
   box-shadow: 0 0 20px rgba(16,185,129,0.3), 0 0 60px rgba(16,185,129,0.1);
 }
+
+/* Card deal */
+@keyframes cardDeal {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.85) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+/* Float */
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(-50%); }
+  50% { transform: translateY(-30px) translateX(-50%); }
+}
+
+/* Caustic light */
+@keyframes caustic {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  33% { transform: rotate(2deg) scale(1.02); }
+  66% { transform: rotate(-1deg) scale(0.99); }
+}
+
+/* Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Squid Casino — home page animations */
+@keyframes squid-flicker {
+  0%,88%,90%,92%,100% { opacity: 1; }
+  89% { opacity: 0.2; }
+  91% { opacity: 0.5; }
+}
+@keyframes float-shape {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  40% { transform: translateY(-18px) rotate(4deg); }
+  70% { transform: translateY(8px) rotate(-2deg); }
+}
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%,100% { text-shadow: 0 0 30px rgba(230,57,70,0.4); }
+  50% { text-shadow: 0 0 80px rgba(230,57,70,0.8), 0 0 140px rgba(230,57,70,0.3); }
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(32px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.game-card { transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease; }
+.game-card:hover { border-color: rgba(230,57,70,0.45) !important; background: rgba(230,57,70,0.05) !important; transform: translateY(-4px); }
+.cta-primary { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+.cta-primary:hover { box-shadow: 0 0 60px rgba(230,57,70,0.6) !important; transform: translateY(-2px); }
 
 /* Timer ring */
 @keyframes timer-ring {

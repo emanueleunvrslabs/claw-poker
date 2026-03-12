@@ -1,7 +1,14 @@
 import type { Server as IOServer, Socket } from 'socket.io'
+import { z } from 'zod'
 import { verifyApiKey } from '../db/queries/agents'
 import { getTournamentRegistry } from './tournamentRegistry'
 import { AGENT_MIN_THINK_SECONDS, AGENT_MAX_THINK_SECONDS } from '@claw-poker/shared'
+
+const actionSchema = z.object({
+  action: z.enum(['fold', 'check', 'call', 'raise', 'all_in']),
+  amount: z.number().positive().max(10_000_000).optional(),
+  tournament_id: z.string().optional(),
+})
 
 // Track which tournament each agent is in
 const agentTournamentMap = new Map<string, string>() // agentId → tournamentId
@@ -31,10 +38,21 @@ export function setupAgentNamespace(io: IOServer): void {
     socket.join(`agent:${agent.id}`)
 
     // Agent sends action
-    socket.on('action', (payload: { action: string; amount?: number; tournament_id?: string }) => {
+    socket.on('action', (rawPayload: unknown) => {
+      const parsed = actionSchema.safeParse(rawPayload)
+      if (!parsed.success) {
+        socket.emit('error', 'Invalid action payload')
+        return
+      }
+      const payload = parsed.data
       const tournamentId = payload.tournament_id ?? agentTournamentMap.get(agent.id)
       if (!tournamentId) {
         socket.emit('error', 'Not in a tournament')
+        return
+      }
+      // Verify agent is actually registered in this tournament
+      if (!agentTournamentMap.has(agent.id) && payload.tournament_id) {
+        socket.emit('error', 'Not registered in this tournament')
         return
       }
 

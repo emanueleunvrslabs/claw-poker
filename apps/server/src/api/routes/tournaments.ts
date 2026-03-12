@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { ethers } from 'ethers'
+import { rateLimit } from '../middleware/rateLimit'
 import {
   listTournaments,
   getTournamentById,
@@ -35,6 +36,31 @@ tournamentsRouter.get('/', async (req, res, next) => {
   }
 })
 
+// GET /api/tournaments/by-agent/:agentId — tournaments the agent is enrolled in (running)
+tournamentsRouter.get('/by-agent/:agentId', async (req, res, next) => {
+  try {
+    const { db } = await import('../../db/client')
+    const { data: entries } = await db
+      .from('tournament_entries')
+      .select('tournament_id')
+      .eq('agent_id', req.params.agentId)
+
+    if (!entries || entries.length === 0) { res.json([]); return }
+
+    const ids = entries.map((e: any) => e.tournament_id)
+    const { data: tournaments } = await db
+      .from('tournaments')
+      .select('*')
+      .in('id', ids)
+      .in('status', ['running', 'registering'])
+      .order('created_at', { ascending: false })
+
+    res.json(tournaments ?? [])
+  } catch (err) {
+    next(err)
+  }
+})
+
 // GET /api/tournaments/:id
 tournamentsRouter.get('/:id', async (req, res, next) => {
   try {
@@ -50,8 +76,8 @@ tournamentsRouter.get('/:id', async (req, res, next) => {
   }
 })
 
-// POST /api/tournaments/:id/join
-tournamentsRouter.post('/:id/join', authMiddleware, async (req, res, next) => {
+// POST /api/tournaments/:id/join — 10/min per agent
+tournamentsRouter.post('/:id/join', authMiddleware, rateLimit(10), async (req, res, next) => {
   try {
     const tournament = await getTournamentById(req.params.id)
     if (!tournament) {
@@ -92,10 +118,10 @@ tournamentsRouter.post('/:id/join', authMiddleware, async (req, res, next) => {
         tournament_id: tournament.id,
         status: 'confirmed',
       })
-      // Add net amount to prize pool
-      await import('../../db/client').then(({ db }) =>
-        db.from('tournaments').update({ prize_pool: tournament.prize_pool + prize }).eq('id', tournament.id)
-      )
+      // Add net amount to prize pool — re-read current value for safety
+      const { db } = await import('../../db/client')
+      const { data: fresh } = await db.from('tournaments').select('prize_pool').eq('id', tournament.id).single()
+      await db.from('tournaments').update({ prize_pool: (fresh?.prize_pool ?? tournament.prize_pool) + prize }).eq('id', tournament.id)
     }
 
     const entry = await addTournamentEntry({
@@ -126,9 +152,8 @@ tournamentsRouter.post('/:id/join', authMiddleware, async (req, res, next) => {
   }
 })
 
-// POST /api/tournaments/:id/join-as-owner
-// Authenticates via wallet signature — the human joins on behalf of their bot
-tournamentsRouter.post('/:id/join-as-owner', async (req, res, next) => {
+// POST /api/tournaments/:id/join-as-owner — 10/min per IP
+tournamentsRouter.post('/:id/join-as-owner', rateLimit(10), async (req, res, next) => {
   try {
     const body = z.object({
       wallet_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/i),
@@ -187,7 +212,8 @@ tournamentsRouter.post('/:id/join-as-owner', async (req, res, next) => {
         status: 'confirmed',
       })
       const { db } = await import('../../db/client')
-      await db.from('tournaments').update({ prize_pool: tournament.prize_pool + prize }).eq('id', tournament.id)
+      const { data: fresh2 } = await db.from('tournaments').select('prize_pool').eq('id', tournament.id).single()
+      await db.from('tournaments').update({ prize_pool: (fresh2?.prize_pool ?? tournament.prize_pool) + prize }).eq('id', tournament.id)
     }
 
     const entry = await addTournamentEntry({

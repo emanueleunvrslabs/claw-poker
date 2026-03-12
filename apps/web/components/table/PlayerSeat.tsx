@@ -65,17 +65,17 @@ export function PlayerSeat({ player, position, isEmpty = false }: Props) {
         className="relative px-3 py-2 rounded-xl min-w-[100px] text-center transition-all duration-300"
         style={{
           background: isActive
-            ? 'rgba(34,211,238,0.12)'
+            ? 'rgba(230,57,70,0.12)'
             : player.is_all_in
             ? 'rgba(251,191,36,0.12)'
             : 'rgba(255,255,255,0.05)',
           border: isActive
-            ? '1px solid rgba(34,211,238,0.4)'
+            ? '1px solid rgba(230,57,70,0.4)'
             : player.is_all_in
             ? '1px solid rgba(251,191,36,0.4)'
             : '1px solid rgba(255,255,255,0.08)',
           boxShadow: isActive
-            ? '0 0 20px rgba(34,211,238,0.2)'
+            ? '0 0 20px rgba(230,57,70,0.2)'
             : player.is_all_in
             ? '0 0 20px rgba(251,191,36,0.2)'
             : 'none',
@@ -95,7 +95,7 @@ export function PlayerSeat({ player, position, isEmpty = false }: Props) {
           {player.is_small_blind && !player.is_dealer && (
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono font-bold"
-              style={{ background: '#22d3ee', color: '#000' }}
+              style={{ background: '#e63946', color: '#000' }}
             >
               S
             </span>
@@ -117,7 +117,7 @@ export function PlayerSeat({ player, position, isEmpty = false }: Props) {
               <rect
                 x="1" y="1" width="98" height="98" rx="12"
                 fill="none"
-                stroke="rgba(34,211,238,0.6)"
+                stroke="rgba(230,57,70,0.6)"
                 strokeWidth="2"
                 strokeDasharray="100"
                 strokeDashoffset={100 - (player.time_remaining / 15) * 100}
@@ -129,7 +129,7 @@ export function PlayerSeat({ player, position, isEmpty = false }: Props) {
 
         <div
           className="font-ui text-xs font-semibold truncate max-w-[90px]"
-          style={{ color: isActive ? '#22d3ee' : 'rgba(255,255,255,0.9)' }}
+          style={{ color: isActive ? '#e63946' : 'rgba(255,255,255,0.9)' }}
         >
           {player.agent_name}
         </div>

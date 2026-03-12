@@ -76,7 +76,7 @@ const MOCK_EMOJIS = ['🤖','🎯','💥','📐','📞','🎭']
 
 type HandleKey = 'cards' | 'nameplate' | 'bet' | 'dealer' | 'bubble'
 const HANDLE_STYLES: Record<HandleKey,{color:string;label:string;size:number}> = {
-  cards:     {color:'#22d3ee', label:'C', size:14},
+  cards:     {color:'#e63946', label:'C', size:14},
   nameplate: {color:'#fff',    label:'N', size:14},
   bet:       {color:'#fbbf24', label:'$', size:12},
   dealer:    {color:'#94a3b8', label:'D', size:10},
@@ -86,7 +86,7 @@ const HANDLE_STYLES: Record<HandleKey,{color:string;label:string;size:number}> =
 function CardBack({w=44,h=63}:{w?:number;h?:number}) {
   return (
     <div style={{width:w,height:h,borderRadius:6,flexShrink:0,background:'linear-gradient(160deg,#1e4080 0%,#0f2550 50%,#071830 100%)',border:'2px solid rgba(60,120,220,0.4)',boxShadow:'0 4px 16px rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
-      <div style={{position:'absolute',inset:3,borderRadius:4,border:'1px solid rgba(34,211,238,0.2)',backgroundImage:'repeating-linear-gradient(45deg,rgba(34,211,238,0.05) 0px,rgba(34,211,238,0.05) 2px,transparent 2px,transparent 8px)'}}/>
+      <div style={{position:'absolute',inset:3,borderRadius:4,border:'1px solid rgba(230,57,70,0.2)',backgroundImage:'repeating-linear-gradient(45deg,rgba(230,57,70,0.05) 0px,rgba(230,57,70,0.05) 2px,transparent 2px,transparent 8px)'}}/>
       <span style={{fontSize:w*0.4,opacity:0.35,color:'#60a5fa',position:'relative'}}>♠</span>
     </div>
   )
@@ -94,11 +94,11 @@ function CardBack({w=44,h=63}:{w?:number;h?:number}) {
 
 function Nameplate({name,emoji,chips,active}:{name:string;emoji:string;chips:number;active?:boolean}) {
   return (
-    <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 10px 5px 6px',borderRadius:10,background:active?'rgba(34,211,238,0.15)':'rgba(5,12,8,0.88)',border:active?'1.5px solid rgba(34,211,238,0.65)':'1px solid rgba(255,255,255,0.14)',boxShadow:active?'0 0 20px rgba(34,211,238,0.28)':'0 2px 12px rgba(0,0,0,0.6)',backdropFilter:'blur(14px)',width:140,flexShrink:0,position:'relative',overflow:'hidden'}}>
-      {active&&<div style={{position:'absolute',top:0,left:0,right:0,height:2.5,background:'rgba(34,211,238,0.4)'}}/>}
+    <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 10px 5px 6px',borderRadius:10,background:active?'rgba(230,57,70,0.15)':'rgba(5,12,8,0.88)',border:active?'1.5px solid rgba(230,57,70,0.65)':'1px solid rgba(255,255,255,0.14)',boxShadow:active?'0 0 20px rgba(230,57,70,0.28)':'0 2px 12px rgba(0,0,0,0.6)',backdropFilter:'blur(14px)',width:140,flexShrink:0,position:'relative',overflow:'hidden'}}>
+      {active&&<div style={{position:'absolute',top:0,left:0,right:0,height:2.5,background:'rgba(230,57,70,0.4)'}}/>}
       <div style={{width:30,height:30,borderRadius:'50%',flexShrink:0,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{emoji}</div>
       <div style={{display:'flex',flexDirection:'column',gap:1}}>
-        <div style={{fontSize:12,fontWeight:700,fontFamily:'system-ui,sans-serif',color:active?'#22d3ee':'rgba(255,255,255,0.95)',maxWidth:82,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name}</div>
+        <div style={{fontSize:12,fontWeight:700,fontFamily:'system-ui,sans-serif',color:active?'#e63946':'rgba(255,255,255,0.95)',maxWidth:82,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name}</div>
         <div style={{fontSize:12,fontWeight:600,fontFamily:'ui-monospace,monospace',color:'rgba(255,255,255,0.65)'}}>{chips.toLocaleString()}</div>
       </div>
     </div>
@@ -190,17 +190,17 @@ export default function TableEditor() {
       <div style={{maxWidth:1300,margin:'0 auto'}}>
 
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16,flexWrap:'wrap'}}>
-          <span style={{fontSize:18,fontWeight:700,color:'#22d3ee'}}>Table Position Editor</span>
+          <span style={{fontSize:18,fontWeight:700,color:'#e63946'}}>Table Position Editor</span>
           <span style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>Drag handles — C=cards N=nameplate $=bet D=dealer B=bubble</span>
           <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12,color:'rgba(255,255,255,0.5)',userSelect:'none'}}>
-            <input type="checkbox" checked={showHandles} onChange={e=>setShowHandles(e.target.checked)} style={{accentColor:'#22d3ee'}}/>
+            <input type="checkbox" checked={showHandles} onChange={e=>setShowHandles(e.target.checked)} style={{accentColor:'#e63946'}}/>
             Handles
           </label>
           <div style={{marginLeft:'auto',display:'flex',gap:8}}>
             <button onClick={resetSeats} style={{padding:'8px 14px',borderRadius:8,border:'1px solid rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.04)',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:12}}>
               Reset
             </button>
-            <button onClick={copyCode} style={{padding:'8px 20px',borderRadius:8,border:'1px solid rgba(34,211,238,0.4)',background:copied?'rgba(34,211,238,0.2)':'rgba(34,211,238,0.08)',color:copied?'#22d3ee':'rgba(255,255,255,0.7)',cursor:'pointer',fontSize:13,fontWeight:600}}>
+            <button onClick={copyCode} style={{padding:'8px 20px',borderRadius:8,border:'1px solid rgba(230,57,70,0.4)',background:copied?'rgba(230,57,70,0.2)':'rgba(230,57,70,0.08)',color:copied?'#e63946':'rgba(255,255,255,0.7)',cursor:'pointer',fontSize:13,fontWeight:600}}>
               {copied?'✓ Copied!':'Copy SEATS_6 code'}
             </button>
           </div>
@@ -319,7 +319,7 @@ export default function TableEditor() {
                   const pt=seat[key]
                   const isActive=(hovering?.si===si&&hovering?.key===key)||(dragging?.si===si&&dragging?.key===key)
                   return (
-                    <div key={key} style={{display:'flex',justifyContent:'space-between',marginBottom:2,color:isActive?'#22d3ee':'rgba(255,255,255,0.4)'}}>
+                    <div key={key} style={{display:'flex',justifyContent:'space-between',marginBottom:2,color:isActive?'#e63946':'rgba(255,255,255,0.4)'}}>
                       <span style={{color:HANDLE_STYLES[key].color}}>{key[0].toUpperCase()}:</span>
                       <span style={{background:'rgba(0,0,0,0.3)',padding:'1px 5px',borderRadius:3}}>{pt.x},{pt.y}</span>
                     </div>

@@ -46,8 +46,8 @@ export const PRIZE_STRUCTURE_HEADS_UP: PrizeStructure = {
 // ===== GAME CONSTANTS =====
 export const STARTING_CHIPS = 1_000_000
 export const ACTION_TIMEOUT_SECONDS = 15          // timeout massimo per azione
-export const AGENT_MIN_THINK_SECONDS = 3          // delay minimo prima che un agente possa agire
-export const AGENT_MAX_THINK_SECONDS = 15         // delay massimo (= ACTION_TIMEOUT_SECONDS)
+export const AGENT_MIN_THINK_SECONDS = 2          // delay minimo prima che un agente possa agire
+export const AGENT_MAX_THINK_SECONDS = 5          // delay massimo per i bot demo
 export const RAKE_PERCENT = 10
 export const MIN_WITHDRAWAL_USDC = 5
 export const MAX_PLAYERS_PER_TABLE = 9

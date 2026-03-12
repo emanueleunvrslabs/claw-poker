@@ -219,9 +219,9 @@ function DepositModal({
         {error && <div style={{ color: '#f43f5e', fontSize: 12, marginTop: 8 }}>{error}</div>}
       </div>
 
-      <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)', marginBottom: 20 }}>
+      <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(230,57,70,0.05)', border: '1px solid rgba(230,57,70,0.15)', marginBottom: 20 }}>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>USDC on Base · Platform wallet</div>
-        <code style={{ fontSize: 11, color: '#22d3ee', wordBreak: 'break-all' }}>{platformConfig.platform_wallet || 'Loading...'}</code>
+        <code style={{ fontSize: 11, color: '#e63946', wordBreak: 'break-all' }}>{platformConfig.platform_wallet || 'Loading...'}</code>
       </div>
 
       <button
@@ -229,7 +229,7 @@ function DepositModal({
         disabled={!amount || step === 'sending' || !platformConfig.platform_wallet}
         style={{
           width: '100%', padding: '14px', borderRadius: 14, border: 'none', cursor: 'pointer',
-          background: step === 'sending' ? 'rgba(34,211,238,0.3)' : 'rgba(34,211,238,0.85)',
+          background: step === 'sending' ? 'rgba(230,57,70,0.3)' : 'rgba(230,57,70,0.85)',
           color: '#000', fontWeight: 700, fontSize: 15,
         }}
       >
@@ -349,7 +349,7 @@ function WithdrawModal({
 
 // ─── Main Dashboard ───────────────────────────────────────
 export default function DashboardPage() {
-  const { address, isConnected, connectWallet: connect, disconnect } = useMetaMask()
+  const { address, isConnected, connectWallet: connect } = useMetaMask()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [platformConfig, setPlatformConfig] = useState<PlatformConfig | null>(null)
@@ -373,8 +373,6 @@ export default function DashboardPage() {
   }, [isConnected, address, fetchProfile])
 
   const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const short = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
-
   const txIcon = (type: string) => ({ deposit: '↓', prize: '↓', withdrawal: '↑', buy_in: '→', rake: '→' }[type] ?? '·')
   const txColor = (type: string) => ['deposit', 'prize'].includes(type) ? '#10b981' : '#f43f5e'
   const txLabel = (tx: Transaction) => ({
@@ -397,7 +395,7 @@ export default function DashboardPage() {
         </p>
         <button
           onClick={connect}
-          style={{ padding: '14px 32px', borderRadius: 16, border: 'none', cursor: 'pointer', background: '#22d3ee', color: '#000', fontWeight: 700, fontSize: 16 }}
+          style={{ padding: '14px 32px', borderRadius: 16, border: 'none', cursor: 'pointer', background: '#e63946', color: '#000', fontWeight: 700, fontSize: 16 }}
         >
           Connect MetaMask
         </button>
@@ -427,16 +425,10 @@ export default function DashboardPage() {
       <div style={{ maxWidth: 1040, margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32, gap: 16, flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: 52, fontWeight: 300, color: 'rgba(255,255,255,0.95)', margin: 0, fontFamily: 'var(--font-display, Georgia)' }}>
-            My <span style={{ fontStyle: 'italic', color: '#22d3ee' }}>Dashboard</span>
+        <div style={{ marginBottom: 32 }}>
+          <h1 className="font-display text-3xl font-bold" style={{ color: 'rgba(255,255,255,0.95)', margin: 0, marginBottom: 6 }}>
+            My <span style={{ color: '#e63946' }}>Dashboard</span>
           </h1>
-          <button
-            onClick={() => disconnect()}
-            style={{ padding: '8px 18px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontFamily: 'monospace' }}
-          >
-            {short(address!)} · Disconnect
-          </button>
         </div>
 
         {/* Top cards */}
@@ -451,7 +443,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => setModal('deposit')}
-                style={{ flex: 1, padding: '10px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'rgba(34,211,238,0.85)', color: '#000', fontWeight: 700, fontSize: 13 }}
+                style={{ flex: 1, padding: '10px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'rgba(230,57,70,0.85)', color: '#000', fontWeight: 700, fontSize: 13 }}
               >
                 Deposit
               </button>
@@ -485,11 +477,8 @@ export default function DashboardPage() {
 
         {/* Agents list */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 24, marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ marginBottom: 20 }}>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>My Agents</h2>
-            <a href="/docs/register" style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(34,211,238,0.8)', color: '#000', fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
-              + Register Agent
-            </a>
           </div>
 
           {!profile?.agents.length ? (
@@ -500,20 +489,17 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {profile.agents.map(agent => (
                 <div key={agent.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🤖</div>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🤖</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 14, color: '#fff', marginBottom: 2 }}>{agent.name}</div>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#22d3ee' }}>ELO {agent.elo_rating}</span>
-                      <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.35)' }}>{agent.total_wins}W / {agent.total_tournaments - agent.total_wins}L</span>
+                    <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#e63946' }}>ELO {agent.elo_rating}</span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 700, color: agent.total_profit >= 0 ? '#10b981' : '#f43f5e' }}>
+                      {agent.total_profit >= 0 ? '+' : ''}${fmt(agent.total_profit)}
                     </div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>profit</div>
                   </div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: agent.total_profit >= 0 ? '#10b981' : '#f43f5e' }}>
-                    {agent.total_profit >= 0 ? '+' : ''}${fmt(agent.total_profit)}
-                  </div>
-                  <a href="/lobby" style={{ padding: '7px 14px', borderRadius: 10, background: 'rgba(34,211,238,0.8)', color: '#000', fontWeight: 700, fontSize: 11, textDecoration: 'none' }}>
-                    Enter
-                  </a>
                 </div>
               ))}
             </div>

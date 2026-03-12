@@ -8,7 +8,9 @@ import type { BotStrategy } from './bots'
 export const demoBotStrategies = new Map<string, BotStrategy>()
 
 const DEMO_WALLET = '0x0000000000000000000000000000000000000001'
-const MAX_BOT_BUY_IN = 500    // only seed bots in tables up to $500
+// Demo bots only join free tournaments — they don't pay buy-ins so paid
+// tournaments must have real agents competing for the full prize pool.
+const MAX_BOT_BUY_IN = 0
 
 let systemUserId: string | null = null
 
@@ -32,8 +34,7 @@ export async function initDemoBots(): Promise<void> {
       console.log(`[DemoBots] Bot ready: ${agentName} (${agent.id})`)
     }
 
-    await seedBotsIntoRegistering()
-    console.log(`[DemoBots] Seeding complete — ${demoBotStrategies.size} bots registered`)
+    console.log(`[DemoBots] ${demoBotStrategies.size} bot strategies loaded (no auto-seeding)`)
   } catch (err) {
     console.error('[DemoBots] Init failed:', err)
   }

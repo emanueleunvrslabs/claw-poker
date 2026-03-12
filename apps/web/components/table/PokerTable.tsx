@@ -3,18 +3,51 @@ import { CardComponent } from './CardComponent'
 import { PlayerSeat } from './PlayerSeat'
 import type { SpectatorGameView } from '@claw-poker/shared'
 
-// 9-player seat layout positions (CSS absolute positioning relative to table oval)
-const SEAT_POSITIONS = [
-  { top: '50%',  left: '50%',  transform: 'translate(-50%, -50%)', label: 'bottom' },   // placeholder, overridden
-  { top: '82%',  left: '28%',  transform: 'translate(-50%, -50%)', label: 'bottom-left' },
-  { top: '82%',  left: '72%',  transform: 'translate(-50%, -50%)', label: 'bottom-right' },
-  { top: '50%',  left: '4%',   transform: 'translate(0, -50%)',    label: 'left' },
-  { top: '50%',  left: '96%',  transform: 'translate(-100%, -50%)',label: 'right' },
-  { top: '18%',  left: '28%',  transform: 'translate(-50%, -50%)', label: 'top-left' },
-  { top: '18%',  left: '72%',  transform: 'translate(-50%, -50%)', label: 'top-right' },
-  { top: '4%',   left: '50%',  transform: 'translate(-50%, 0)',    label: 'top' },
-  { top: '60%',  left: '50%',  transform: 'translate(-50%, -50%)', label: 'bottom' },
+// ── Seat layout positions by player count ────────────────────────────────────
+
+// 2-player: left ↔ right (heads-up)
+const SEAT_POSITIONS_2 = [
+  { top: '50%', left: '4%',  transform: 'translate(0, -50%)',     label: 'left' },
+  { top: '50%', left: '96%', transform: 'translate(-100%, -50%)', label: 'right' },
 ]
+
+// 4-player: 2 on top, 2 on bottom
+const SEAT_POSITIONS_4 = [
+  { top: '14%', left: '32%', transform: 'translate(-50%, -50%)', label: 'top-left' },
+  { top: '14%', left: '68%', transform: 'translate(-50%, -50%)', label: 'top-right' },
+  { top: '86%', left: '68%', transform: 'translate(-50%, -50%)', label: 'bottom-right' },
+  { top: '86%', left: '32%', transform: 'translate(-50%, -50%)', label: 'bottom-left' },
+]
+
+// 6-player standard
+const SEAT_POSITIONS_6 = [
+  { top: '82%', left: '28%', transform: 'translate(-50%, -50%)', label: 'bottom-left' },
+  { top: '82%', left: '72%', transform: 'translate(-50%, -50%)', label: 'bottom-right' },
+  { top: '50%', left: '4%',  transform: 'translate(0, -50%)',    label: 'left' },
+  { top: '50%', left: '96%', transform: 'translate(-100%, -50%)',label: 'right' },
+  { top: '18%', left: '28%', transform: 'translate(-50%, -50%)', label: 'top-left' },
+  { top: '18%', left: '72%', transform: 'translate(-50%, -50%)', label: 'top-right' },
+]
+
+// 9-player full table
+const SEAT_POSITIONS_9 = [
+  { top: '82%', left: '28%', transform: 'translate(-50%, -50%)', label: 'bottom-left' },
+  { top: '82%', left: '72%', transform: 'translate(-50%, -50%)', label: 'bottom-right' },
+  { top: '50%', left: '4%',  transform: 'translate(0, -50%)',    label: 'left' },
+  { top: '50%', left: '96%', transform: 'translate(-100%, -50%)',label: 'right' },
+  { top: '18%', left: '28%', transform: 'translate(-50%, -50%)', label: 'top-left' },
+  { top: '18%', left: '72%', transform: 'translate(-50%, -50%)', label: 'top-right' },
+  { top: '4%',  left: '50%', transform: 'translate(-50%, 0)',    label: 'top' },
+  { top: '60%', left: '50%', transform: 'translate(-50%, -50%)', label: 'bottom' },
+  { top: '65%', left: '14%', transform: 'translate(-50%, -50%)', label: 'bottom-left-2' },
+]
+
+function getSeatPositions(count: number) {
+  if (count <= 2) return SEAT_POSITIONS_2
+  if (count <= 4) return SEAT_POSITIONS_4
+  if (count <= 6) return SEAT_POSITIONS_6
+  return SEAT_POSITIONS_9
+}
 
 interface Props {
   view?: SpectatorGameView | null
@@ -119,8 +152,8 @@ export function PokerTable({ view, tournamentId, tableId }: Props) {
           </div>
         </div>
 
-        {/* Player seats around the table */}
-        {SEAT_POSITIONS.slice(1, state.players.length + 1).map((pos, i) => {
+        {/* Player seats — layout adapts to player count */}
+        {getSeatPositions(state.players.length).slice(0, state.players.length).map((pos, i) => {
           const player = state.players[i]
           if (!player) return null
           return (
@@ -158,7 +191,7 @@ function InfoPill({ label, value, accent }: { label: string; value: string; acce
       className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
       style={{
         background: 'rgba(255,255,255,0.04)',
-        border: accent ? '1px solid rgba(34,211,238,0.2)' : '1px solid rgba(255,255,255,0.07)',
+        border: accent ? '1px solid rgba(230,57,70,0.2)' : '1px solid rgba(255,255,255,0.07)',
       }}
     >
       <span className="font-mono text-[10px] tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -166,7 +199,7 @@ function InfoPill({ label, value, accent }: { label: string; value: string; acce
       </span>
       <span
         className="font-mono text-sm font-semibold"
-        style={{ color: accent ? '#22d3ee' : 'rgba(255,255,255,0.8)' }}
+        style={{ color: accent ? '#e63946' : 'rgba(255,255,255,0.8)' }}
       >
         {value}
       </span>
