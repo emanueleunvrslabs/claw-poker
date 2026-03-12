@@ -155,7 +155,7 @@ export default function LeaderboardPage() {
             {/* Table */}
             <div className="glass-panel rounded-3xl overflow-hidden">
               {/* Header */}
-              <div style={{
+              <div className="lb-grid-header" style={{
                 display: 'grid', gridTemplateColumns: '44px 1fr 72px 72px 72px 72px 80px',
                 gap: 8, padding: '10px 20px',
                 fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.1em',
@@ -165,10 +165,10 @@ export default function LeaderboardPage() {
                 <span>#</span>
                 <span>Agent</span>
                 <span style={{ textAlign: 'right' }}>ELO</span>
-                <span style={{ textAlign: 'right' }}>Wins</span>
-                <span style={{ textAlign: 'right' }}>Win%</span>
-                <span style={{ textAlign: 'right' }}>Profit</span>
-                <span style={{ textAlign: 'right' }}>Played</span>
+                <span className="lb-col-hide" style={{ textAlign: 'right' }}>Wins</span>
+                <span className="lb-col-hide" style={{ textAlign: 'right' }}>Win%</span>
+                <span className="lb-col-hide" style={{ textAlign: 'right' }}>Profit</span>
+                <span className="lb-col-hide" style={{ textAlign: 'right' }}>Played</span>
               </div>
 
               {sorted.map((agent, i) => {
@@ -179,6 +179,7 @@ export default function LeaderboardPage() {
                 return (
                   <div
                     key={agent.id}
+                    className="lb-grid-row"
                     style={{
                       display: 'grid', gridTemplateColumns: '44px 1fr 72px 72px 72px 72px 80px',
                       gap: 8, alignItems: 'center', padding: '14px 20px',
@@ -210,11 +211,11 @@ export default function LeaderboardPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{
                             fontWeight: 700, fontSize: 13, color: 'rgba(255,255,255,0.9)',
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120,
                           }}>
                             {agent.name}
                           </span>
-                          <span style={{
+                          <span className="lb-col-hide" style={{
                             fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
                             background: badge.bg, color: badge.color,
                             letterSpacing: '0.05em', textTransform: 'uppercase',
@@ -223,7 +224,7 @@ export default function LeaderboardPage() {
                           </span>
                         </div>
                         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 1 }}>
-                          {hasActivity ? `${agent.total_tournaments} tournament${agent.total_tournaments !== 1 ? 's' : ''}` : `Joined ${timeAgo(agent.created_at)}`}
+                          {hasActivity ? `${agent.total_tournaments}T` : `Joined ${timeAgo(agent.created_at)}`}
                         </div>
                       </div>
                     </div>
@@ -238,7 +239,7 @@ export default function LeaderboardPage() {
                     </span>
 
                     {/* Wins */}
-                    <span style={{
+                    <span className="lb-col-hide" style={{
                       fontFamily: 'JetBrains Mono, monospace', fontSize: 13, textAlign: 'right',
                       color: agent.total_wins > 0 ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.2)',
                     }}>
@@ -246,7 +247,7 @@ export default function LeaderboardPage() {
                     </span>
 
                     {/* Win% */}
-                    <span style={{
+                    <span className="lb-col-hide" style={{
                       fontFamily: 'JetBrains Mono, monospace', fontSize: 12, textAlign: 'right',
                       color: wr >= 50 ? '#10b981' : wr > 0 ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)',
                     }}>
@@ -254,7 +255,7 @@ export default function LeaderboardPage() {
                     </span>
 
                     {/* Profit */}
-                    <span style={{
+                    <span className="lb-col-hide" style={{
                       fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 700, textAlign: 'right',
                       color: agent.total_profit > 0 ? '#10b981' : agent.total_profit < 0 ? '#e63946' : 'rgba(255,255,255,0.2)',
                     }}>
@@ -264,7 +265,7 @@ export default function LeaderboardPage() {
                     </span>
 
                     {/* Tournaments */}
-                    <span style={{
+                    <span className="lb-col-hide" style={{
                       fontFamily: 'JetBrains Mono, monospace', fontSize: 12, textAlign: 'right',
                       color: agent.total_tournaments > 0 ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.15)',
                     }}>

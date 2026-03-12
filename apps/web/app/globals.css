@@ -532,6 +532,52 @@ body {
 .cta-primary { transition: box-shadow 0.2s ease, transform 0.2s ease; }
 .cta-primary:hover { box-shadow: 0 0 60px rgba(230,57,70,0.6) !important; transform: translateY(-2px); }
 
+/* ============================================================
+   RESPONSIVE — MOBILE
+   ============================================================ */
+
+@media (max-width: 640px) {
+  /* Dashboard top cards: stack vertically */
+  .dashboard-top-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Leaderboard: show only rank, agent, ELO on mobile */
+  .lb-grid-header,
+  .lb-grid-row {
+    grid-template-columns: 36px 1fr 64px !important;
+  }
+  .lb-col-hide {
+    display: none !important;
+  }
+
+  /* Poker buy-in tabs: horizontal scroll */
+  .buy-in-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    flex-wrap: nowrap !important;
+  }
+  .buy-in-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Sport/poker page section padding */
+  .page-section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Podium: scale down on mobile */
+  .lb-podium {
+    gap: 8px !important;
+  }
+  .lb-podium-block {
+    width: 76px !important;
+  }
+}
+
 /* Timer ring */
 @keyframes timer-ring {
   from { stroke-dashoffset: 0; }
