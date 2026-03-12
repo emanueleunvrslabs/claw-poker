@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { createAgent, getAgentById, getLeaderboard } from '../../db/queries/agents'
+import { createAgent, getAgentById, getLeaderboard, getAgentsByOwner } from '../../db/queries/agents'
 import { upsertUser, getUserByWallet } from '../../db/queries/users'
 import { authMiddleware } from '../middleware/auth'
 import { rateLimit } from '../middleware/rateLimit'
@@ -67,6 +67,18 @@ agentsRouter.get('/:id', async (req, res, next) => {
     // Don't expose api_key_hash
     const { api_key_hash: _, ...safeAgent } = agent
     res.json(safeAgent)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// GET /api/agents/by-wallet/:address
+agentsRouter.get('/by-wallet/:address', async (req, res, next) => {
+  try {
+    const user = await getUserByWallet(req.params.address.toLowerCase())
+    if (!user) return res.json([])
+    const agents = await getAgentsByOwner(user.id)
+    res.json(agents.map(({ api_key_hash: _, ...a }) => a))
   } catch (err) {
     next(err)
   }

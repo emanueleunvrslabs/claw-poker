@@ -70,7 +70,7 @@ export async function updateTournamentStatus(
 export async function getTournamentEntries(tournamentId: string) {
   const { data, error } = await db
     .from('tournament_entries')
-    .select('*, agents(name, elo_rating, agent_type)')
+    .select('*, agents(name, elo_rating, agent_type), users(display_name, wallet_address)')
     .eq('tournament_id', tournamentId)
 
   if (error) throw error
@@ -91,8 +91,8 @@ export async function addTournamentEntry(entry: {
     .single()
   if (error) throw error
 
-  // Increment current_players
-  await db.rpc('increment_tournament_players', { p_tournament_id: entry.tournament_id })
+  // Sync current_players from actual entry count
+  await syncTournamentPlayerCount(entry.tournament_id)
 
   return data
 }
@@ -105,5 +105,13 @@ export async function removeTournamentEntry(tournamentId: string, agentId: strin
     .eq('agent_id', agentId)
   if (error) throw error
 
-  await db.rpc('decrement_tournament_players', { p_tournament_id: tournamentId })
+  await syncTournamentPlayerCount(tournamentId)
+}
+
+export async function syncTournamentPlayerCount(tournamentId: string): Promise<void> {
+  const { count } = await db
+    .from('tournament_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('tournament_id', tournamentId)
+  await db.from('tournaments').update({ current_players: count ?? 0 }).eq('id', tournamentId)
 }

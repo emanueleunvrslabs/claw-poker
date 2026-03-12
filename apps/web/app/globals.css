@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -47,8 +47,8 @@
   --table-glow: rgba(16, 185, 129, 0.15);
 
   /* Typography */
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-ui: 'Syne', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-ui: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 

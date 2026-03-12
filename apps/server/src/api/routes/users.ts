@@ -41,6 +41,39 @@ usersRouter.get('/', async (req, res, next) => {
   }
 })
 
+// PATCH /api/users/display-name — set display name (signature-authenticated)
+usersRouter.patch('/display-name', async (req, res, next) => {
+  try {
+    const body = z.object({
+      wallet_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/i),
+      display_name: z.string().min(1).max(32).trim(),
+      signature: z.string(),
+      timestamp: z.number().int(),
+    }).parse(req.body)
+
+    const age = Math.floor(Date.now() / 1000) - body.timestamp
+    if (age < 0 || age > 300) {
+      res.status(400).json({ error: 'Signature expired' }); return
+    }
+
+    const message = `Set display name: ${body.display_name}\nWallet: ${body.wallet_address}\nTimestamp: ${body.timestamp}`
+    const recovered = ethers.verifyMessage(message, body.signature)
+    if (recovered.toLowerCase() !== body.wallet_address.toLowerCase()) {
+      res.status(401).json({ error: 'Invalid signature' }); return
+    }
+
+    const { error } = await db.from('users')
+      .update({ display_name: body.display_name })
+      .eq('wallet_address', body.wallet_address.toLowerCase())
+    if (error) throw error
+
+    res.json({ display_name: body.display_name })
+  } catch (err) {
+    if (err instanceof z.ZodError) { res.status(400).json({ error: err.flatten().fieldErrors }); return }
+    next(err)
+  }
+})
+
 // GET /api/config — public platform info for frontend
 usersRouter.get('/config', (_req, res) => {
   res.json({

@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
+import { useMetaMask } from '@/lib/useMetaMask'
 
 const nav = [
   { label: 'Lobby', href: '/lobby' },
@@ -11,9 +12,12 @@ const nav = [
 
 export function Header() {
   const pathname = usePathname()
+  const { address, isConnected, connectWallet, disconnect } = useMetaMask()
 
   // Table popup windows have no header
   if (pathname.startsWith('/table/')) return null
+
+  const short = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
 
   return (
     <header
@@ -74,12 +78,23 @@ export function Header() {
           ))}
         </nav>
 
-        {/* CTA */}
-        <button
-          className="glass-button btn-cyan px-5 py-2 rounded-xl text-sm font-ui font-semibold tracking-wide"
-        >
-          Connect Wallet
-        </button>
+        {/* Wallet CTA */}
+        {isConnected && address ? (
+          <button
+            onClick={() => disconnect()}
+            className="glass-button px-5 py-2 rounded-xl text-sm font-ui font-medium tracking-wide"
+            style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+          >
+            {short(address)} · Disconnect
+          </button>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="glass-button btn-cyan px-5 py-2 rounded-xl text-sm font-ui font-semibold tracking-wide"
+          >
+            Connect Wallet
+          </button>
+        )}
       </div>
     </header>
   )

@@ -1,4 +1,4 @@
-import type { Tournament, TournamentEntry, BlindLevel } from '@claw-poker/shared'
+import type { Tournament, TournamentEntry, BlindLevel, AgentGameView, ActionType, GamePhase } from '@claw-poker/shared'
 import { AGENT_MIN_THINK_SECONDS, AGENT_MAX_THINK_SECONDS } from '@claw-poker/shared'
 import { PokerGame, type GamePlayer, type HandResult } from './game'
 import { getCurrentBlindState } from './blinds'
@@ -35,6 +35,7 @@ export class TournamentManager {
   private currentGame: PokerGame | null = null
   private handCount = 0
   private eventHandlers: TournamentEventHandler[] = []
+  private botHandlers = new Map<string, (view: AgentGameView) => { action: ActionType; amount?: number }>()
   private isRunning = false
 
   constructor(tournament: Tournament, blindStructure: BlindLevel[]) {
@@ -45,6 +46,13 @@ export class TournamentManager {
 
   on(handler: TournamentEventHandler): void {
     this.eventHandlers.push(handler)
+  }
+
+  registerBotHandler(
+    agentId: string,
+    handler: (view: AgentGameView) => { action: ActionType; amount?: number },
+  ): void {
+    this.botHandlers.set(agentId, handler)
   }
 
   addPlayer(agentId: string, agentName: string): void {
@@ -136,13 +144,55 @@ export class TournamentManager {
       blindState.ante
     )
 
-    // Intercept action_required to enforce think delay for agents
+    // Hook game events: auto-play demo bots + forward state to tournament handlers
     this.currentGame.on((event) => {
       if (event.type === 'action_required') {
-        // The think delay is enforced by wrapping submitAction — agents must wait 3-15s
-        // This is handled in the WebSocket layer
+        const playerIndex = event.data?.player_index as number
+        const gs = event.state
+        const currentPlayer = gs?.players?.[playerIndex]
+        if (currentPlayer) {
+          const botHandler = this.botHandlers.get(currentPlayer.agent_id)
+          if (botHandler) {
+            const view: AgentGameView = {
+              tournament_id: this.tournament.id,
+              table_id: `${this.tournament.id}-t${this.handCount}`,
+              hand_number: gs.hand_number ?? this.handCount,
+              phase: gs.phase as GamePhase,
+              your_cards: currentPlayer.hole_cards ?? [],
+              community_cards: gs.community_cards ?? [],
+              pot: gs.pot ?? 0,
+              side_pots: gs.side_pots ?? [],
+              your_chips: currentPlayer.chips,
+              your_bet_this_round: currentPlayer.bet_this_round ?? 0,
+              current_bet: Math.max(0, ...gs.players.map((p: any) => p.bet_this_round ?? 0)),
+              min_raise: gs.last_raise_size ?? 0,
+              players: gs.players.map((p: any, idx: number) => ({
+                agent_id: p.agent_id,
+                agent_name: p.agent_name,
+                seat: p.seat ?? idx,
+                chips: p.chips,
+                bet_this_round: p.bet_this_round ?? 0,
+                is_folded: p.is_folded ?? false,
+                is_all_in: p.is_all_in ?? false,
+                is_dealer: p.is_dealer ?? false,
+                is_current_turn: idx === playerIndex,
+              })),
+              your_position: playerIndex,
+              dealer_position: gs.dealer_index ?? 0,
+              time_to_act: 15,
+              valid_actions: (event.data?.valid_actions as ActionType[]) ?? ['fold', 'call'],
+            }
+            const thinkMs =
+              (AGENT_MIN_THINK_SECONDS + Math.random() * (AGENT_MAX_THINK_SECONDS - AGENT_MIN_THINK_SECONDS)) * 1000
+            const game = this.currentGame
+            setTimeout(() => {
+              if (!game) return
+              const decision = botHandler(view)
+              game.submitAction(currentPlayer.agent_id, decision)
+            }, thinkMs)
+          }
+        }
       }
-      // Forward all game events to tournament handlers
       this.emit('hand_start', { hand_number: this.handCount, state: event.state })
     })
 

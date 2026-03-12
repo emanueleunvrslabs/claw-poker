@@ -22,7 +22,7 @@ export default function TablePopup({ params }: { params: { id: string; n: string
         width: 'min(100%, calc((100vh - 66px) * 900 / 700))',
         overflow: 'visible',
       }}>
-        <LiveTable />
+        <LiveTable tournamentId={params.id} />
       </div>
     </div>
   )

@@ -41,14 +41,25 @@ export async function getUserById(id: string): Promise<UserRow | null> {
 export async function updateBalance(
   userId: string,
   delta: number,
-  type: 'deposit' | 'withdrawal' | 'buy_in' | 'prize'
+  _type: 'deposit' | 'withdrawal' | 'buy_in' | 'prize'
 ): Promise<number> {
-  // Use RPC for atomic balance update
-  const { data, error } = await db.rpc('update_user_balance', {
-    p_user_id: userId,
-    p_delta: delta,
-  })
+  // Read current balance, then write new value (Supabase JS doesn't support atomic increment natively)
+  const { data: user, error: readError } = await db
+    .from('users')
+    .select('balance_usdc')
+    .eq('id', userId)
+    .single()
 
-  if (error) throw new Error(`Balance update failed: ${error.message}`)
-  return data
+  if (readError || !user) throw new Error(`User not found: ${readError?.message}`)
+
+  const newBalance = Number((user.balance_usdc + delta).toFixed(6))
+  if (newBalance < 0) throw new Error('Insufficient balance')
+
+  const { error: writeError } = await db
+    .from('users')
+    .update({ balance_usdc: newBalance })
+    .eq('id', userId)
+
+  if (writeError) throw new Error(`Balance update failed: ${writeError.message}`)
+  return newBalance
 }

@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { io, type Socket } from 'socket.io-client'
 
-const DEMO_WS = 'http://localhost:3333/spectate'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
+const SPECTATE_WS = `${API_URL}/spectate`
 
 interface DemoPlayer {
   agent_id: string; agent_name: string; emoji: string
@@ -131,7 +132,7 @@ const ACTION_COLOR: Record<string, string> = {
   all_in: 'rgba(251,191,36,0.92)',
 }
 
-export function LiveTable() {
+export function LiveTable({ tournamentId }: { tournamentId?: string }) {
   const [state, setState] = useState<DemoState | null>(null)
   const [connected, setConnected] = useState(false)
   const [scale, setScale] = useState(1)
@@ -141,8 +142,8 @@ export function LiveTable() {
   const lastActionKeyRef = useRef<string>('')
 
   useEffect(() => {
-    const socket = io(DEMO_WS, {transports:['websocket','polling'],reconnectionDelay:1000})
-    socket.on('connect', () => { setConnected(true); socket.emit('watch','demo-1') })
+    const socket = io(SPECTATE_WS, {transports:['websocket','polling'],reconnectionDelay:1000})
+    socket.on('connect', () => { setConnected(true); socket.emit('watch', tournamentId ?? 'demo-1') })
     socket.on('disconnect', () => setConnected(false))
     socket.on('game:state', (d:DemoState) => setState(d))
     socketRef.current = socket

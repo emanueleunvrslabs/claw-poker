@@ -3,6 +3,7 @@ import { Server as IOServer } from 'socket.io'
 import { setupAgentNamespace } from './agentHandler'
 import { setupSpectatorNamespace } from './spectatorHandler'
 import { initTournamentRegistry } from './tournamentRegistry'
+import { initDemoBots } from '../demo/demoBotSeeder'
 
 export function setupWebSocket(httpServer: HTTPServer): IOServer {
   const io = new IOServer(httpServer, {
@@ -18,8 +19,10 @@ export function setupWebSocket(httpServer: HTTPServer): IOServer {
 
   const registry = initTournamentRegistry(io)
 
-  // Seed default free tournaments on startup
-  registry.seedDefaultTournaments().catch(console.error)
+  // Seed tournaments then populate with demo bots
+  registry.seedDefaultTournaments()
+    .then(() => initDemoBots())
+    .catch(console.error)
 
   return io
 }

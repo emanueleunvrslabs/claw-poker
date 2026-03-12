@@ -1,9 +1,8 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useWriteContract, useSignMessage, useWaitForTransactionReceipt } from 'wagmi'
-import { injected } from 'wagmi/connectors'
-import { parseUnits } from 'viem'
-import { API_URL, USDC_ABI } from '@/lib/web3'
+import { useMetaMask } from '@/lib/useMetaMask'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 // ─── Types ──────────────────────────────────────────────
 interface UserProfile {
@@ -71,55 +70,114 @@ function DepositModal({
   const [amount, setAmount] = useState('')
   const [step, setStep] = useState<'amount' | 'sending' | 'confirming' | 'done'>('amount')
   const [error, setError] = useState('')
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
-
-  const { writeContract, data: writeTxHash, isPending: isSending } = useWriteContract()
-  const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: writeTxHash })
-
-  // When on-chain tx confirms, submit to our backend
-  useEffect(() => {
-    if (!writeTxHash) return
-    setTxHash(writeTxHash)
-    setStep('confirming')
-  }, [writeTxHash])
-
-  useEffect(() => {
-    if (!txConfirmed || !txHash) return
-    submitDeposit(txHash)
-  }, [txConfirmed, txHash])
+  const [txHash, setTxHash] = useState<string | undefined>()
 
   const submitDeposit = async (hash: string) => {
-    try {
-      const res = await fetch(`${API_URL}/api/users/deposit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet_address: walletAddress, tx_hash: hash }),
-      })
-      if (!res.ok) {
+    // Retry up to 10 times with 4s delay — Base RPC may lag behind MetaMask
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        const res = await fetch(`${API_URL}/api/users/deposit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallet_address: walletAddress, tx_hash: hash }),
+        })
+        if (res.ok) {
+          setStep('done')
+          setTimeout(() => { onClose(); onSuccess() }, 2000)
+          return
+        }
         const err = await res.json()
+        // If tx not found yet on server RPC, wait and retry
+        if (res.status === 400 && (err.error ?? '').includes('not found')) {
+          await new Promise(r => setTimeout(r, 4000))
+          continue
+        }
+        // Already processed = success for UX purposes
+        if (res.status === 409) {
+          setStep('done')
+          setTimeout(() => { onClose(); onSuccess() }, 2000)
+          return
+        }
         setError(err.error ?? 'Deposit failed')
         setStep('amount')
         return
+      } catch {
+        setError('Network error. Please try again.')
+        setStep('amount')
+        return
       }
-      setStep('done')
-      setTimeout(() => { onClose(); onSuccess() }, 2000)
-    } catch {
-      setError('Network error. Please try again.')
-      setStep('amount')
     }
+    setError('Server could not verify tx. Contact support with tx hash.')
+    setStep('amount')
   }
 
-  const handleSend = () => {
+  const waitForReceipt = async (eth: any, hash: string): Promise<void> => {
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 3000))
+      const receipt = await eth.request({ method: 'eth_getTransactionReceipt', params: [hash] })
+      if (receipt?.status === '0x1') return
+      if (receipt && receipt.status !== '0x1') throw new Error('Transaction failed on-chain')
+    }
+    throw new Error('Transaction not confirmed after 3 minutes')
+  }
+
+  const handleSend = async () => {
     const amt = parseFloat(amount)
     if (!amt || amt < 1) { setError('Minimum deposit: $1 USDC'); return }
+    const eth = (window as any).ethereum
+    if (!eth) { setError('MetaMask not found'); return }
     setError('')
     setStep('sending')
-    writeContract({
-      address: platformConfig.usdc_contract as `0x${string}`,
-      abi: USDC_ABI,
-      functionName: 'transfer',
-      args: [platformConfig.platform_wallet as `0x${string}`, parseUnits(amount, 6)],
-    })
+
+    // Switch to Base mainnet (chain 8453 = 0x2105)
+    try {
+      await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] })
+    } catch (switchErr: any) {
+      // Chain not added yet — add it
+      if (switchErr.code === 4902) {
+        try {
+          await eth.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x2105',
+              chainName: 'Base',
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://mainnet.base.org'],
+              blockExplorerUrls: ['https://basescan.org'],
+            }],
+          })
+        } catch {
+          setError('Could not switch to Base network. Please switch manually in MetaMask.')
+          setStep('amount')
+          return
+        }
+      } else if (switchErr.code !== 4001) {
+        // Ignore non-user-rejection errors (some wallets don't support wallet_switchEthereumChain)
+      } else {
+        setError('Please switch to Base network in MetaMask.')
+        setStep('amount')
+        return
+      }
+    }
+
+    // Encode ERC20 transfer(address,uint256) — selector 0xa9059cbb
+    const amountHex = BigInt(Math.round(amt * 1_000_000)).toString(16).padStart(64, '0')
+    const toHex = platformConfig.platform_wallet.replace(/^0x/i, '').toLowerCase().padStart(64, '0')
+    const data = `0xa9059cbb${toHex}${amountHex}`
+
+    try {
+      const hash: string = await eth.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: walletAddress, to: platformConfig.usdc_contract, data }],
+      })
+      setTxHash(hash)
+      setStep('confirming')
+      await waitForReceipt(eth, hash)
+      await submitDeposit(hash)
+    } catch (e: any) {
+      setError(e.code === 4001 ? 'Transaction rejected' : (e.message ?? 'Transaction failed'))
+      setStep('amount')
+    }
   }
 
   const labelStyle = { fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.3)', marginBottom: 8 }
@@ -197,38 +255,33 @@ function WithdrawModal({
   const [step, setStep] = useState<'amount' | 'signing' | 'sending' | 'done'>('amount')
   const [error, setError] = useState('')
 
-  const { signMessage, data: signature, isPending: isSigning } = useSignMessage()
-
-  useEffect(() => {
-    if (!signature) return
-    submitWithdraw(signature)
-  }, [signature])
-
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     const amt = parseFloat(amount)
     if (!amt || amt < 1) { setError('Minimum withdrawal: $1 USDC'); return }
     if (amt > balance) { setError(`Insufficient balance ($${balance.toFixed(2)})`); return }
+    const eth = (window as any).ethereum
+    if (!eth) { setError('MetaMask not found'); return }
     setError('')
+
     const timestamp = Math.floor(Date.now() / 1000)
     const message = `Withdraw ${amt} USDC from Claw Poker\nWallet: ${walletAddress}\nTimestamp: ${timestamp}`
-    ;(window as any).__withdrawTimestamp = timestamp
-    ;(window as any).__withdrawAmount = amt
     setStep('signing')
-    signMessage({ message })
-  }
 
-  const submitWithdraw = async (sig: string) => {
+    let signature: string
+    try {
+      signature = await eth.request({ method: 'personal_sign', params: [message, walletAddress] })
+    } catch (e: any) {
+      setError(e.code === 4001 ? 'Signature rejected' : 'Sign failed')
+      setStep('amount')
+      return
+    }
+
     setStep('sending')
     try {
       const res = await fetch(`${API_URL}/api/users/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet_address: walletAddress,
-          amount: (window as any).__withdrawAmount,
-          signature: sig,
-          timestamp: (window as any).__withdrawTimestamp,
-        }),
+        body: JSON.stringify({ wallet_address: walletAddress, amount: amt, signature, timestamp }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -296,9 +349,7 @@ function WithdrawModal({
 
 // ─── Main Dashboard ───────────────────────────────────────
 export default function DashboardPage() {
-  const { address, isConnected } = useAccount()
-  const { connect, connectors, isPending: isConnecting, error: connectError } = useConnect()
-  const { disconnect } = useDisconnect()
+  const { address, isConnected, connectWallet: connect, disconnect } = useMetaMask()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [platformConfig, setPlatformConfig] = useState<PlatformConfig | null>(null)
@@ -345,22 +396,11 @@ export default function DashboardPage() {
           Connect your wallet to manage your balance, register agents, and join tournaments.
         </p>
         <button
-          onClick={() => {
-            const connector = connectors[0]
-            if (connector) {
-              connect({ connector })
-            } else {
-              window.open('https://metamask.io/download/', '_blank')
-            }
-          }}
-          disabled={isConnecting}
+          onClick={connect}
           style={{ padding: '14px 32px', borderRadius: 16, border: 'none', cursor: 'pointer', background: '#22d3ee', color: '#000', fontWeight: 700, fontSize: 16 }}
         >
-          {isConnecting ? 'Connecting...' : connectors[0] ? 'Connect MetaMask' : 'Install MetaMask'}
+          Connect MetaMask
         </button>
-        {connectError && (
-          <div style={{ marginTop: 12, fontSize: 13, color: '#f43f5e' }}>{connectError.message}</div>
-        )}
       </div>
     </div>
   )
